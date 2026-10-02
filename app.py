@@ -372,10 +372,7 @@ def call_groq(system_prompt, history_msgs, user_message):
     except Exception as e:
         print(f"--- ERRO GROQ: {e} ---")
         return None, f"Erro ao contatar a IA: {e}"
-    except requests.exceptions.Timeout:
-        return None, '⚠️ A IA demorou demais para responder. Tente novamente.'
-    except Exception as e:
-        return None, f'⚠️ Erro ao contatar a IA: {str(e)[:160]}'
+    
 
 # ═══════════════════════════════ RELATÓRIO DOCX ════════════════════════════════
 
