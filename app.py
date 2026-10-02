@@ -333,9 +333,9 @@ def build_ai_context(user):
 
 
 def call_groq(system_prompt, history_msgs, user_message):
-    api_key = os.environ.get('GROQ_API_KEY', '') or GROQ_API_KEY
+    api_key = os.environ.get('GROQ_API_KEY', '').strip() or GROQ_API_KEY
     if not api_key or api_key.startswith('coloque_aqui'):
-        return None, 'Chave da IA (Groq) não configurada.'
+        return None, 'Chave da IA (Groq) não configurada no Render.'
 
     messages = [{'role': 'system', 'content': system_prompt}]
     for h in history_msgs[-10:]:
@@ -344,6 +344,7 @@ def call_groq(system_prompt, history_msgs, user_message):
             messages.append({'role': role, 'content': h['content']})
     messages.append({'role': 'user', 'content': user_message})
 
+    # MODELO E URL HARDCODED PARA EVITAR OVERRIDE DE VARIÁVEIS ANTIGAS
     url = 'https://api.groq.com/openai/v1/chat/completions'
     body = {
         'model': 'llama-3.3-70b-versatile',
@@ -371,8 +372,9 @@ def call_groq(system_prompt, history_msgs, user_message):
         return (text or '(sem conteúdo)'), None
     except Exception as e:
         print(f"--- ERRO GROQ: {e} ---")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"--- DETALHE DO ERRO GROQ: {e.response.text} ---")
         return None, f"Erro ao contatar a IA: {e}"
-    
 
 # ═══════════════════════════════ RELATÓRIO DOCX ════════════════════════════════
 
