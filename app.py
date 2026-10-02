@@ -333,10 +333,12 @@ def build_ai_context(user):
 
 
 def call_groq(system_prompt, history_msgs, user_message):
-    if not GROQ_API_KEY or GROQ_API_KEY.startswith('coloque_aqui'):
-        return None, ('⚠️ Chave da IA (Groq) não configurada. Peça uma chave gratuita em '
-                       'console.groq.com/keys e coloque em GROQ_API_KEY no arquivo .env '
-                       '(ou nas variáveis de ambiente do Render).')
+    # Usa a chave configurada ou a variável de ambiente
+    api_key = GROQ_API_KEY or os.environ.get('GROQ_API_KEY', '')
+    
+    if not api_key:
+        return None, "Chave da IA (Groq) não configurada."
+
     messages = [{'role': 'system', 'content': system_prompt}]
     for h in history_msgs[-10:]:
         role = 'assistant' if h.get('role') == 'assistant' else 'user'
@@ -344,22 +346,32 @@ def call_groq(system_prompt, history_msgs, user_message):
             messages.append({'role': role, 'content': h['content']})
     messages.append({'role': 'user', 'content': user_message})
 
+    # Forçamos diretamente a URL e o modelo válidos
+    url = 'https://api.groq.com/openai/v1/chat/completions'
     body = {
         'model': 'llama-3.3-70b-versatile',
         'messages': messages,
         'temperature': 0.7,
-        'max_tokens': 700,
+        'max_tokens': 700
     }
+
     try:
-        resp = requests.post(GROQ_URL, headers={'Content-Type': 'application/json',
-                                                  'Authorization': f'Bearer {GROQ_API_KEY}'},
-                              json=body, timeout=30)
-        if resp.status_code in (401, 403):
-            return None, '⚠️ Chave da IA inválida ou sem permissão. Verifique GROQ_API_KEY.'
-        if resp.status_code == 429:
-            return None, '⚠️ Limite de uso gratuito da IA atingido no momento. Tente novamente em instantes.'
+        resp = requests.post(
+            url, 
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {api_key}'
+            }, 
+            json=body, 
+            timeout=30
+        )
         resp.raise_for_status()
         data = resp.json()
+        return data['choices'][0]['message']['content'], None
+    except Exception as e:
+        print(f"--- ERRO GROQ: {e} ---")
+        return None, f"Erro ao contatar a IA: {e}"
+        
         choices = data.get('choices') or []
         if not choices:
             return None, '⚠️ A IA não retornou uma resposta. Tente novamente.'
