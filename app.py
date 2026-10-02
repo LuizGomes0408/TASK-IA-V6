@@ -347,7 +347,7 @@ def call_groq(system_prompt, history_msgs, user_message):
     # MODELO E URL HARDCODED PARA EVITAR OVERRIDE DE VARIÁVEIS ANTIGAS
     url = 'https://api.groq.com/openai/v1/chat/completions'
     body = {
-        'model': 'llama3-8b-8192',
+        'model': 'llama-3.1-8b-instant',
         'messages': messages,
         'temperature': 0.7,
         'max_tokens': 700
