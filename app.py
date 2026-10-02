@@ -333,11 +333,9 @@ def build_ai_context(user):
 
 
 def call_groq(system_prompt, history_msgs, user_message):
-    # Usa a chave configurada ou a variável de ambiente
-    api_key = GROQ_API_KEY or os.environ.get('GROQ_API_KEY', '')
-    
-    if not api_key:
-        return None, "Chave da IA (Groq) não configurada."
+    api_key = os.environ.get('GROQ_API_KEY', '') or GROQ_API_KEY
+    if not api_key or api_key.startswith('coloque_aqui'):
+        return None, 'Chave da IA (Groq) não configurada.'
 
     messages = [{'role': 'system', 'content': system_prompt}]
     for h in history_msgs[-10:]:
@@ -346,7 +344,6 @@ def call_groq(system_prompt, history_msgs, user_message):
             messages.append({'role': role, 'content': h['content']})
     messages.append({'role': 'user', 'content': user_message})
 
-    # Forçamos diretamente a URL e o modelo válidos
     url = 'https://api.groq.com/openai/v1/chat/completions'
     body = {
         'model': 'llama-3.3-70b-versatile',
@@ -357,26 +354,24 @@ def call_groq(system_prompt, history_msgs, user_message):
 
     try:
         resp = requests.post(
-            url, 
+            url,
             headers={
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {api_key}'
-            }, 
-            json=body, 
+            },
+            json=body,
             timeout=30
         )
         resp.raise_for_status()
         data = resp.json()
-        return data['choices'][0]['message']['content'], None
+        choices = data.get('choices') or []
+        if not choices:
+            return None, 'A IA não retornou uma resposta. Tente novamente.'
+        text = (choices[0].get('message', {}).get('content') or '').strip()
+        return (text or '(sem conteúdo)'), None
     except Exception as e:
         print(f"--- ERRO GROQ: {e} ---")
         return None, f"Erro ao contatar a IA: {e}"
-        
-        choices = data.get('choices') or []
-        if not choices:
-            return None, '⚠️ A IA não retornou uma resposta. Tente novamente.'
-        text = (choices[0].get('message', {}).get('content') or '').strip()
-        return (text or '(sem conteúdo)'), None
     except requests.exceptions.Timeout:
         return None, '⚠️ A IA demorou demais para responder. Tente novamente.'
     except Exception as e:
