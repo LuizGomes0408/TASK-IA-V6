@@ -337,14 +337,15 @@ def call_groq(system_prompt, history_msgs, user_message):
     if not api_key or api_key.startswith('coloque_aqui'):
         return None, 'Chave da IA (Groq) não configurada no Render.'
 
-    messages = [{'role': 'system', 'content': system_prompt}]
-    for h in history_msgs[-10:]:
+    messages = [{'role': 'system', 'content': str(system_prompt)}]
+    for h in (history_msgs or [])[-10:]:
         role = 'assistant' if h.get('role') == 'assistant' else 'user'
-        if h.get('content'):
-            messages.append({'role': role, 'content': h['content']})
-    messages.append({'role': 'user', 'content': user_message})
+        content = h.get('content') or ''
+        if content.strip():
+            messages.append({'role': role, 'content': str(content)})
+            
+    messages.append({'role': 'user', 'content': str(user_message)})
 
-    # MODELO E URL HARDCODED PARA EVITAR OVERRIDE DE VARIÁVEIS ANTIGAS
     url = 'https://api.groq.com/openai/v1/chat/completions'
     body = {
         'model': 'llama-3.1-8b-instant',
