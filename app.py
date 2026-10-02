@@ -345,7 +345,7 @@ def call_groq(system_prompt, history_msgs, user_message):
     messages.append({'role': 'user', 'content': user_message})
 
     body = {
-        'model': GROQ_MODEL,
+        'model': 'llama-3.3-70b-versatile',
         'messages': messages,
         'temperature': 0.7,
         'max_tokens': 700,
